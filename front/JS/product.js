@@ -41,7 +41,7 @@ fetch ('http://localhost:3000/api/products/'+ idResult)
     .then(product => {
         addProduct(product)})
 // 2.Message d'erreur > contact service commercial  
-    .catch(function(result){
+    .catch(function(){
         document.querySelector(".item__img").innerHTML += `<h2>Oops ! L'affichage des détails du produit est introuvable.</h2> 
                                                             <p>Envoyer un mail à l'un de nos commercial qui vous répondra dans les plus bref délais <a href="mailto:support@name.com"> Contact </a></p>`;
     });

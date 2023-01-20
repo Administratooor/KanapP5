@@ -7,9 +7,9 @@ const url = 'http://localhost:3000/api/products';
 
 // 1.fonction pour insertion des article dans class "items"
 function insertHtml(article) {
-  return `<a href="http://127.0.0.1:5000/front/html/product.html?id=${article._id}">
+  return `<a href="product.html?id=${article._id}">
                                                       <article>
-                                                        <img src="${article.imageUrl}" alt="Lorem ipsum dolor sit amet, Kanap name1">
+                                                        <img src="${article.imageUrl}" alt="${article.altTxt}">
                                                         <h3 class="productName">${article.name}</h3>
                                                         <p class="productDescription">${article.description}</p>
                                                       </article>
