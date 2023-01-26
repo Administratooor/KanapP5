@@ -14,151 +14,140 @@ class Article {
                   dans #cart__items via function insert 
 ------------------------------------------------------------------------------*/
 
-function returnParse() {
-  //On parcour les key du localStorage en lui passant en argument i.
-  // for (let i = 0; i < localStorage.length; i++) {
-  //   console.log(i);
-  const localFound = localStorage.getItem('product');
-  // console.log(localFound);
-  /* Stockage des données avec JSON.parse(), 
-    et les données deviennent des objets JavaScript. */
-  let storageInsert = JSON.parse(localFound);
-  // console.log(storageInsert);
-  // Récupération des id dans tableau/élements ayant l'index 0 puis la valeur id
-  let idPanier = storageInsert[0].id;
-  console.log(idPanier);
-  // Promess qui récupére les objects dans l'API
-  fetch(url)
-    // Extraction des données en json
-    .then((data) => data.json())
-    // Itération des données (dataFound) avec (for of),
-    // et les assignés à la variable priceRecovery en utilisant la class Article et son contructor.
-    .then((dataFound) => {
-      // console.log(dataFound);
-      for (let jsonArticle of dataFound) {
-        let priceRecovery = new Article(jsonArticle);
-        // Si le priceRecovery et égale à l'id du panier
-        if (priceRecovery._id == idPanier) {
-          /* Créer un nouvel object via localStorage  */
-          for (let jsonArticle of storageInsert) {
-            let article = new Article(jsonArticle);
-            // console.log(article);
-            /* Récupérer un élément HTML et inserer facilement le contenu existant
-               d'une fonction avec innertHTML ( function insert) qui prend en argument les éléments de l'API
-              "sensible" (priceRecovery) et (article) pour les éléments du local Storage */
+function returnProductDom() {
+  // Récuperer et parsé le localStorage et toutes les key
+  for (let i = 0; i < localStorage.length; i++) {
+    let localFound = localStorage.getItem(localStorage.key(i));
+    let localParse = JSON.parse(localFound);
+
+    fetch(url)
+      // Extraction des données en json
+      .then((data) => data.json())
+
+      .then((dataFound) => {
+        // console.log(dataFound);
+        for (let foundProduct of dataFound) {
+          let article = foundProduct;
+          if (article._id === localParse.id) {
+            // let picture = document.querySelector('.cart__item__img');
+            // console.log(picture);
             document.querySelector('#cart__items').innerHTML += insert(
-              article,
-              priceRecovery
+              localParse,
+              article
             );
-            totalProduit();
-            // totalQuantity(article);
           }
         }
-      }
-    });
+      });
+  }
+  // deleteItem();
+  quantityChange();
+  totalProduit();
 }
 
-// Rechercher le prix via api
-// Une fonction qui modifie localStorage
-// Une fonction qui se charge de modifier le panier prix
+returnProductDom();
 
 /*----------------------------------------------------------------------------
                 Fonction pour innertHTML de #cart__items 
 ------------------------------------------------------------------------------*/
 
-function insert(article, priceRecovery) {
-  return `<article class="cart__item" data-id="${article.id}" data-color="${article.color}"data-quantité="${article.quantity}"data-prix="${priceRecovery.price}">
-      <div class="cart__item__img">
-      <img src ="${article.pictureSrc}">
+function insert(localParse, article) {
+  return `<article class="cart__item" data-id="${localParse.id}" data-color="${localParse.color}">
+  <div class="cart__item__img">
+    <img src="" alt="Photographie d'un canapé">
+  </div>
+  <div class="cart__item__content">
+    <div class="cart__item__content__description">
+      <h2>${localParse.name}</h2>
+      <p>${localParse.color}</p>
+      <p>${article.price}€</p>
+    </div>
+    <div class="cart__item__content__settings">
+      <div class="cart__item__content__settings__quantity">
+        <p>Qté : </p>
+        <input type="number" class="itemQuantity" name="itemQuantity" min="1" max="100" value="${localParse.quantity}">
       </div>
-      <div class="cart__item__content">
-        <div class="cart__item__content__description">
-          <h2>${article.name}</h2>
-          <p>${article.color}</p>
-          <p >${priceRecovery.price} €</p>
-        </div>
-        <div class="cart__item__content__settings">
-          <div class="cart__item__content__settings__quantity">
-            <p>Qté :</p>
-            <input type="number" class="itemQuantity" name="itemQuantity" min="1" max="100" value="${article.quantity}">
-          </div>
-          <div class="cart__item__content__settings__delete">
-          <p class="deleteItem" data-id="${article.id}" data-couleur="${article.color}">Supprimer</p>
-          </div>
-        </div>
+      <div class="cart__item__content__settings__delete">
+        <p class="deleteItem">Supprimer</p>
       </div>
-    </article>`;
+    </div>
+  </div>
+</article>`;
 }
-
-returnParse();
 
 //--------------------------------------------------------------
 // fonction pour modifier la quantité dans le localStorage
 //--------------------------------------------------------------
-function modifQuantité() {
-  // boucle sur le localStorage.key dans localFound
-  for (let i = 0; i < localStorage.length; i++) {
-    const localFound = localStorage.getItem(localStorage.key(i));
-    console.log(localFound);
-    //transformation des données en objet
-    let storageInsert = JSON.parse(localFound);
-    console.log(storageInsert);
-    //récupération des clés "name" sur les objets
-    let foundName = storageInsert[0].name;
-    console.log(foundName);
 
-    // Récupération de l'élément .cartItem sur le DOM
-    let cart = document.querySelectorAll('.cart__item');
-    /* forEach pour itérer sur les propriétés du tableau*/
-    cart.forEach((cart) => {
-      // ecoute de l'article au changement avec attribut (e)
-      cart.addEventListener('change', (e) => {
-        //recuperation du localStorage avec leurs "foundName" dans la variable "basket"
-        let basket = JSON.parse(localStorage.getItem(foundName));
-        // boucle
-        for (itemOfBasket of basket)
-          if (
-            // Verification que que les color sont identiques && les id
-            cart.dataset.color === itemOfBasket.color &&
-            cart.dataset.id === itemOfBasket.id
-          ) {
-            // si la condition est remplie ont assigne les nouvelle valeurs
-            itemOfBasket.quantity = e.target.value;
-            // Ont intégre une nouvelle valeur (mise à jour ) au localStorage
-            localStorage.setItem('panierStocké', JSON.stringify(basket));
-            // Mise à jour de dataset.quantité
-            cart.dataset.quantité = e.target.value;
-            // rejoue la fonction totalProduit pour mettre à jour le prixTotal
-            totalProduit();
-          }
-      });
-    });
+function quantityChange() {
+  const KanapArea = document.querySelectorAll('.cart__item');
+  console.log(KanapArea);
+  for (let i = 0; i < localStorage.length; i++) {
+    let localFound = localStorage.getItem(localStorage.key(i));
+    let localParse = JSON.parse(localFound);
+
+    let panier = JSON.parse(
+      localStorage.getItem(localParse.id + '|' + localParse.color)
+    );
+    console.log(panier);
   }
+  KanapArea.forEach((KanapArea) => {
+    KanapArea.addEventListener('change', (e) => {
+      // Récupération des clés pour la variable panier
+
+      // boucle pour vérifier si les id et color sont identiques
+      for (product of panier)
+        if (
+          KanapArea.dataset.color === product.color &&
+          product.id === KanapArea.dataset.id
+        ) {
+          // Appliquer la valeur récupéré à la quantité du panier
+          product.quantité = e.target.value;
+          //Réinjecter le panier
+          localStorage.KanapArea = JSON.stringify(panier);
+
+          totalProduit();
+        }
+    });
+  });
 }
 
-//--------------------------------------------------------------
-// fonction pour modifier le prix de façon dynamique
-//--------------------------------------------------------------
+// //--------------------------------------------------------------
+// //             modification dynamique du prix
+// //--------------------------------------------------------------
 function totalProduit() {
-  // initialisation en nombre de la variable totalProduct
+  // Declaration en nombre de totalProduct
   let totalProduct = 0;
-  // initialisation en nombre de la variable totalPrice
+  // Declaration en nombre de totalPrice
   let totalPrice = 0;
-  // Récupération de l'élément .cartItem sur le DOM
-  const itemCart = document.querySelectorAll('.cart__item');
-  // pour chaque élément itemcart
-  itemCart.forEach((itemCart) => {
-    //Inserer les dataset "quantité" pour les affecter à totalProduct
-    totalProduct += JSON.parse(itemCart.dataset.quantité);
-    // affectation de totalPrice à  : itemCart.dataset.quantité * itemCart.dataset.prix
-    totalPrice += itemCart.dataset.quantité * itemCart.dataset.prix;
-  });
+  // boucle sur localStorage pour recupération de la quantity
+  for (let i = 0; i < localStorage.length; i++) {
+    let localFound = localStorage.getItem(localStorage.key(i));
+    let localParse = JSON.parse(localFound);
+    // Injection de la quantity du local storage
+    totalProduct += localParse.quantity;
+    // Injection de la quantity dans le DOM
+    document.getElementById('totalQuantity').textContent = totalProduct;
+    /* appel API si l'id est identique a l'id du localStorage 
+    > Importer le prix et le multiplier par la quantity et l'afficher dans DOM */
+    fetch(url)
+      // Extraction des données en json
+      .then((data) => data.json())
 
-  // affichage de la quantité dynamique dans avec totalProduct
-  document.getElementById('totalQuantity').textContent = totalProduct;
-  // affichage du prix dynamique dans avec totalPrice
-  document.getElementById('totalPrice').textContent = totalPrice;
-  modifQuantité();
+      .then((dataFound) => {
+        // console.log(dataFound);
+        for (let foundProduct of dataFound) {
+          // Importation du prix dans la variable price
+          let price = foundProduct.price;
+          if (foundProduct._id === localParse.id) {
+            totalPrice += localParse.quantity * price;
+            document.getElementById('totalPrice').textContent = totalPrice;
+          }
+        }
+      })
+      .catch(function () {
+        console.log('test');
+      });
+  }
 }
 
 // ------------------Étape 10 : Passer la commande -----------------
