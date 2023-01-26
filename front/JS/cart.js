@@ -32,11 +32,9 @@ function returnProductDom() {
           }
         }
         changeQuantity();
+        deleteProduct();
       });
   }
-
-  // deleteItem();
-  // quantityChange();
   totalProduit();
 }
 
@@ -73,19 +71,33 @@ returnProductDom();
 //--------------------------------------------------------------
 
 function changeQuantity() {
+  // selection de la list de noeuds
   const KanapArea = document.querySelectorAll('.cart__item');
+  //  utilisation de la méthode nodeList pour appelle callback sur chaque éléments de cart__item
   KanapArea.forEach((KanapArea) => {
+    // Appel de l'événement au change sur kanapArea et récupération de la valeur
     KanapArea.addEventListener('change', (e) => {
+      //boucle sur les key du localStorage
       for (let i = 0; i < localStorage.length; i++) {
+        // stockage des key dans localFound
         let localFound = localStorage.getItem(localStorage.key(i));
+        // Parse des key dans localParse
         let localParse = JSON.parse(localFound);
+        // utilisation des valeurs pour création de la condition qui pointe le produit ayant le méme id et color que dataset
         let panier = localParse.id + '|' + localParse.color;
+        // utilisation de la condition
         if (panier == KanapArea.dataset.id + '|' + KanapArea.dataset.color) {
-          localParse.quantity = e.target.value;
+          //  retourne la valeur d'un nombre arrondi à l'entier le plus proche dans la variable priceMatch
+          let priceMath = Math.round(e.target.value);
+          // assigner la quantité de priceMatch dans localStorage
+          localParse.quantity = priceMath;
+          // envoi des nouvelle valeur dans localStorage
           localStorage.setItem(panier, JSON.stringify(localParse));
           console.log(localParse);
         }
       }
+
+      // Re calcul du prix total
       totalProduit();
     });
   });
@@ -130,6 +142,34 @@ function totalProduit() {
         console.log('test');
       });
   }
+}
+
+function deleteProduct() {
+  const deleteKanap = document.querySelectorAll('.deleteItem');
+
+  deleteKanap.forEach((deleteKanap) => {
+    deleteKanap.addEventListener('click', () => {
+      for (const greyback of document.getElementsByClassName('deleteItem')) {
+        let deleteItem = greyback.closest('.cart__item');
+
+        for (let i = 0; i < localStorage.length; i++) {
+          let localFound = localStorage.getItem(localStorage.key(i));
+          let localParse = JSON.parse(localFound);
+
+          if (
+            deleteItem.dataset.id == localParse.id &&
+            deleteItem.dataset.color == localParse.color
+          ) {
+          } else {
+            console.log(localParse.id + '|' + localParse.color);
+            localStorage.removeItem(localParse.id + '|' + localParse.color);
+            deleteItem.remove();
+            totalProduit();
+          }
+        }
+      }
+    });
+  });
 }
 
 // ------------------Étape 10 : Passer la commande -----------------
