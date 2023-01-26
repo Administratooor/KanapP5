@@ -3,12 +3,6 @@
 
 const url = 'http://localhost:3000/api/products';
 
-// constructeur d'élements
-class Article {
-  constructor(jsonArticle) {
-    jsonArticle && Object.assign(this, jsonArticle);
-  }
-}
 /*----------------------------------------------------------------------------
             Parcourir le localStorage et injection des éléments
                   dans #cart__items via function insert 
@@ -37,14 +31,14 @@ function returnProductDom() {
             );
           }
         }
+        changeQuantity();
       });
   }
+
   // deleteItem();
-  quantityChange();
+  // quantityChange();
   totalProduit();
 }
-
-returnProductDom();
 
 /*----------------------------------------------------------------------------
                 Fonction pour innertHTML de #cart__items 
@@ -73,40 +67,26 @@ function insert(localParse, article) {
   </div>
 </article>`;
 }
-
+returnProductDom();
 //--------------------------------------------------------------
 // fonction pour modifier la quantité dans le localStorage
 //--------------------------------------------------------------
 
-function quantityChange() {
+function changeQuantity() {
   const KanapArea = document.querySelectorAll('.cart__item');
-  console.log(KanapArea);
-  for (let i = 0; i < localStorage.length; i++) {
-    let localFound = localStorage.getItem(localStorage.key(i));
-    let localParse = JSON.parse(localFound);
-
-    let panier = JSON.parse(
-      localStorage.getItem(localParse.id + '|' + localParse.color)
-    );
-    console.log(panier);
-  }
   KanapArea.forEach((KanapArea) => {
     KanapArea.addEventListener('change', (e) => {
-      // Récupération des clés pour la variable panier
-
-      // boucle pour vérifier si les id et color sont identiques
-      for (product of panier)
-        if (
-          KanapArea.dataset.color === product.color &&
-          product.id === KanapArea.dataset.id
-        ) {
-          // Appliquer la valeur récupéré à la quantité du panier
-          product.quantité = e.target.value;
-          //Réinjecter le panier
-          localStorage.KanapArea = JSON.stringify(panier);
-
-          totalProduit();
+      for (let i = 0; i < localStorage.length; i++) {
+        let localFound = localStorage.getItem(localStorage.key(i));
+        let localParse = JSON.parse(localFound);
+        let panier = localParse.id + '|' + localParse.color;
+        if (panier == KanapArea.dataset.id + '|' + KanapArea.dataset.color) {
+          localParse.quantity = e.target.value;
+          localStorage.setItem(panier, JSON.stringify(localParse));
+          console.log(localParse);
         }
+      }
+      totalProduit();
     });
   });
 }
@@ -119,6 +99,7 @@ function totalProduit() {
   let totalProduct = 0;
   // Declaration en nombre de totalPrice
   let totalPrice = 0;
+
   // boucle sur localStorage pour recupération de la quantity
   for (let i = 0; i < localStorage.length; i++) {
     let localFound = localStorage.getItem(localStorage.key(i));
@@ -127,6 +108,7 @@ function totalProduit() {
     totalProduct += localParse.quantity;
     // Injection de la quantity dans le DOM
     document.getElementById('totalQuantity').textContent = totalProduct;
+
     /* appel API si l'id est identique a l'id du localStorage 
     > Importer le prix et le multiplier par la quantity et l'afficher dans DOM */
     fetch(url)
