@@ -155,14 +155,14 @@ function deleteProduct() {
         for (let i = 0; i < localStorage.length; i++) {
           let localFound = localStorage.getItem(localStorage.key(i));
           let localParse = JSON.parse(localFound);
+          console.log(localParse);
 
           if (
-            deleteItem.dataset.id == localParse.id &&
-            deleteItem.dataset.color == localParse.color
+            deleteItem.dataset.id === localParse.id &&
+            deleteItem.dataset.color === localParse.color
           ) {
-          } else {
             console.log(localParse.id + '|' + localParse.color);
-            localStorage.removeItem(localParse.id + '|' + localParse.color);
+            // localStorage.removeItem(localParse.id + '|' + localParse.color);
             deleteItem.remove();
             totalProduit();
           }
