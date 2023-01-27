@@ -66,6 +66,10 @@ function insert(localParse, article) {
 </article>`;
 }
 returnProductDom();
+
+/*-------------------------------------------------------------------------------------------------*/
+/* -------------Étape 9 : Gérer la modification et la suppression de produits dans la page Panier---------*/
+
 //--------------------------------------------------------------
 // fonction pour modifier la quantité dans le localStorage
 //--------------------------------------------------------------
