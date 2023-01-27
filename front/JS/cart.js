@@ -152,24 +152,31 @@ function deleteProduct() {
       for (const greyback of document.getElementsByClassName('deleteItem')) {
         let deleteItem = greyback.closest('.cart__item');
 
-        for (let i = 0; i < localStorage.length; i++) {
-          let localFound = localStorage.getItem(localStorage.key(i));
-          let localParse = JSON.parse(localFound);
-          console.log(localParse);
+        let localFound = localStorage.getItem(
+          deleteItem.dataset.id + '|' + deleteItem.dataset.color
+        );
+        let localParse = JSON.parse(localFound);
+        console.log(localParse);
 
+        for (item of localFound) {
           if (
-            deleteItem.dataset.id === localParse.id &&
-            deleteItem.dataset.color === localParse.color
+            deleteItem.dataset.id !== item.id &&
+            deleteItem.dataset.color !== item.color
           ) {
-            console.log(localParse.id + '|' + localParse.color);
-            // localStorage.removeItem(localParse.id + '|' + localParse.color);
+            //si l'article ajouté correspond à un article du panier
             deleteItem.remove();
-            totalProduit();
+            localStorage.removeItem(localParse.id + '|' + localParse.color);
+            location.reload(); // modifier sa quantité
+            return; //mettre fin à la fonction
+          } else {
+            console.log(localParse.id + '|' + localParse.color);
           }
         }
       }
     });
   });
+
+  totalProduit();
 }
 
 // ------------------Étape 10 : Passer la commande -----------------
