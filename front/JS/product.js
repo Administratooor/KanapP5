@@ -16,16 +16,12 @@ const queryString_url_id = window.location.search;
 console.log(queryString_url_id);
 
 /*---Étape 5 : Récupérer l’id du produit à afficher---*/
-//Enlever le ? de queryString_url_id
 
-//1.Méthode 1 - > Extraire juste l'id avec slice */
-/*const idProduct = queryString_url_id.slice(1);
-console.log(idProduct);*/
-
-//2.Méthode 2 - > Extraire l'id avec urlSearchParams
+// Extraire l'id avec urlSearchParams
 const idProduct = new URLSearchParams(queryString_url_id);
 console.log(idProduct);
 
+// Récupération de l'id
 const idResult = idProduct.get('id');
 console.log(idResult);
 
@@ -39,18 +35,22 @@ function addProduct(product) {
   document.querySelector('#title').innerHTML += `${product.name}`;
   document.querySelector('#price').innerHTML += `${product.price}`;
   document.querySelector('#description').innerHTML += `${product.description}`;
-  // A TERMINER !!!!
-  document.querySelector(
-    '#colors'
-  ).innerHTML += `<option value=${product.colors[0]}>${product.colors[0]}</option>
-    <option value=${product.colors[1]}>${product.colors[1]}</option><option value=${product.colors}>${product.colors[3]}</option>`;
+  // boucle sur les couleurs de l'api pour insérer dans l'id colors les values associés au produit
+  for (let couleur of product.colors) {
+    document.querySelector(
+      '#colors'
+    ).innerHTML += `<option value="${couleur}">${couleur}</option>`;
+  }
 }
 
-/*---Étape 6 :Appeler l'API avec promess pour récupérer les données du produit---*/
+/*-------------------------------------------------------------------------------------------------*/
+/* -------------Étape 6 :Appeler l'API avec promess pour récupérer les données du produit---------*/
+
 //1.Promess pour récupération du produit concerné par idResult
 fetch('http://localhost:3000/api/products/' + idResult)
   .then((res) => res.json())
   .then((product) => {
+    // Fonction pour afficher le produit sur le DOM
     addProduct(product);
   })
   // 2.Message d'erreur > contact service commercial
@@ -65,35 +65,58 @@ fetch('http://localhost:3000/api/products/' + idResult)
 
 // Récupérer le button sur le DOM via la const addToCart
 const addToCart = document.querySelector('#addToCart');
-console.log(addToCart);
+
 //Initialiser un tableau vide qui va acceuillir item
 let data = [];
 
+// Récupératoin de l'input dans la variable pour ajout panier en cas de modification
+let inputQuantity = document.querySelector('input[id="quantity"]');
+
 //Evénement au click sur le button
-addToCart.addEventListener('click', () => {
-  // Récupération sur le DOM des éléments "color,quantity,price + name"
+addToCart.addEventListener('click', (e) => {
+  e.preventDefault();
+  // Récupération sur le DOM des éléments "color,quantity,name"
   const color = document.querySelector('#colors').value;
   const quantity = document.querySelector('#quantity').value;
-  // Récupérer le titre pour l'assigner en clés de l'objet JSON
   const name = document.querySelector('#title').textContent;
+
+  // On crée un objet qui servira de structure à data
 
   const item = {
     name: name,
     id: idResult,
     color: color,
-    quantity: Number(quantity), // Convertir la quantité en number
+    quantity: Math.round(Number(quantity)), // Convertir la quantité en number
   };
 
   function updateData(item, data) {
-    if (item.color === '' || item.quantity == 0 || item.quantity == '') {
+    if (
+      item.color === '' ||
+      item.color === undefined ||
+      item.quantity < 1 ||
+      item.quantity > 100 ||
+      item.quantity === undefined
+    ) {
       alert('Veuillez renseigner une couleur et une quantitée ');
       return;
+    } else {
+      /* On pousse l'objet item dans le tableau data , on crée un identifiant unique pour la clés 
+      ( id + color ).On sérialise*/
+      data.push(item);
+      localStorage.setItem(item.id + '|' + item.color, JSON.stringify(item));
+      addToCart.innerHTML = 'Produit ajouté';
     }
-    data.push(item);
   }
-  localStorage.setItem(item.id + '|' + item.color, JSON.stringify(item));
 
+  // On joue la fonction
   updateData(item, data);
+  modifQuantity(item);
   /*-----  Redirection vers la page panier (optionnel)-----
       =>   window.location.href = 'cart.html'; */
 });
+
+function modifQuantity(item) {
+  inputQuantity.addEventListener('input', () => {
+    item.quantity = item.quantity + inputQuantity.value;
+  });
+}

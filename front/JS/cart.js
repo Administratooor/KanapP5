@@ -29,13 +29,14 @@ function returnProductDom() {
               localParse,
               article
             );
+            totalProduit();
           }
         }
-        changeQuantity();
+
         deleteProduct();
       });
   }
-  totalProduit();
+  changeQuantity();
 }
 
 /*----------------------------------------------------------------------------
@@ -75,7 +76,7 @@ returnProductDom();
 //--------------------------------------------------------------
 
 function changeQuantity() {
-  // selection de la list de noeuds
+  // selection de la liste de noeuds
   const KanapArea = document.querySelectorAll('.cart__item');
   //  utilisation de la méthode nodeList pour appelle callback sur chaque éléments de cart__item
   KanapArea.forEach((KanapArea) => {
@@ -98,11 +99,9 @@ function changeQuantity() {
           // envoi des nouvelle valeur dans localStorage
           localStorage.setItem(panier, JSON.stringify(localParse));
           console.log(localParse);
-        }
+          totalProduit();
+        } // Re calcul du prix total
       }
-
-      // Re calcul du prix total
-      totalProduit();
     });
   });
 }
@@ -149,38 +148,203 @@ function totalProduit() {
 }
 
 function deleteProduct() {
-  const deleteKanap = document.querySelectorAll('.deleteItem');
-
-  deleteKanap.forEach((deleteKanap) => {
-    deleteKanap.addEventListener('click', () => {
-      for (const greyback of document.getElementsByClassName('deleteItem')) {
-        let deleteItem = greyback.closest('.cart__item');
-
-        let localFound = localStorage.getItem(
-          deleteItem.dataset.id + '|' + deleteItem.dataset.color
-        );
-        let localParse = JSON.parse(localFound);
-        console.log(localParse);
-
-        for (item of localFound) {
-          if (
-            deleteItem.dataset.id !== item.id &&
-            deleteItem.dataset.color !== item.color
-          ) {
-            //si l'article ajouté correspond à un article du panier
-            deleteItem.remove();
-            localStorage.removeItem(localParse.id + '|' + localParse.color);
-            location.reload(); // modifier sa quantité
-            return; //mettre fin à la fonction
-          } else {
-            console.log(localParse.id + '|' + localParse.color);
-          }
+  const deleteButtons = document.querySelectorAll('.deleteItem');
+  deleteButtons.forEach((deleteButton) => {
+    deleteButton.addEventListener('click', () => {
+      const deleteItem = deleteButton.closest('.cart__item');
+      const localFound = localStorage.getItem(
+        deleteItem.dataset.id + '|' + deleteItem.dataset.color
+      );
+      if (localFound) {
+        const item = JSON.parse(localFound);
+        if (
+          deleteItem.dataset.id === item.id &&
+          deleteItem.dataset.color === item.color
+        ) {
+          localStorage.removeItem(item.id + '|' + item.color);
+          deleteItem.remove();
+          totalProduit();
+          window.location.reload();
         }
       }
     });
   });
+}
+// ------------------Étape 10 : Passer la commande ----------------- //
 
-  totalProduit();
+//---------- REGEX Contrôle Formulaire--------------//
+
+// Déclaration des Regex pour utilisation dans les contrôles de form
+let firstNameLastNameRegExp = /^[a-záàâäãåçéèêëíìîïñóòôöõúùûüýÿæœ\s-]{1,31}$/i;
+let addressRegExp = /^[a-z0-9áàâäãåçéèêëíìîïñóòôöõúùûüýÿæœ\s-]{1,60}$/i;
+let cityRegExp = /^[a-záàâäãåçéèêëíìîïñóòôöõúùûüýÿæœ\s-]{1,31}$/i;
+let emailRegExp = /^[A-Za-z0-9_!#$%&'*+\/=?`{|}~^.-]+@[A-Za-z0-9.-]+$/i;
+
+// Déclaration des variables pour utilisation dans les contrôles de form
+const order = document.getElementById('order');
+let form = document.querySelector('.cart__order__form');
+let submit = document.querySelector('.cart__order__form__submit');
+
+//------------ Validation du prénom  ------------//
+form.firstName.addEventListener('change', function (e) {
+  e.preventDefault();
+  valideFirstname(this);
+});
+const valideFirstname = function (inputFirstName) {
+  let testFirstname = firstNameLastNameRegExp.test(inputFirstName.value);
+
+  let firstNameValidate = document.getElementById('firstNameErrorMsg');
+  let firstNameChangeColor = document.getElementById('firstName');
+
+  if (testFirstname) {
+    firstNameChangeColor.style.border = '4px solid green';
+    firstNameValidate.textContent = 'Prénom valide';
+    return true;
+  } else {
+    firstNameChangeColor.style.border = '4px solid red';
+    firstNameValidate.textContent = "Merci d'inscrire un prénom valide";
+    return false;
+  }
+};
+
+//------------ Validation du nom ------------//
+form.lastName.addEventListener('change', function (e) {
+  e.preventDefault();
+  valideLastName(this);
+});
+
+const valideLastName = function (inputLastName) {
+  let testLastName = firstNameLastNameRegExp.test(inputLastName.value);
+
+  let lastNameChangeColor = document.getElementById('lastName');
+  let LastNameValidate = document.getElementById('lastNameErrorMsg');
+
+  if (testLastName) {
+    lastNameChangeColor.style.border = '4px solid green';
+    LastNameValidate.textContent = 'Nom valide';
+    return true;
+  } else {
+    lastNameChangeColor.style.border = '4px solid red';
+    LastNameValidate.textContent = "Merci d'inscrire un nom valide";
+    return false;
+  }
+};
+
+//------------ Validation de l'adresse ------------//
+form.address.addEventListener('change', function (e) {
+  e.preventDefault();
+  valideAddress(this);
+});
+const valideAddress = function (inputAddress) {
+  let testAddress = addressRegExp.test(inputAddress.value);
+
+  let addressValidate = document.getElementById('addressErrorMsg');
+  let addressChangeColor = document.getElementById('address');
+
+  if (testAddress) {
+    addressChangeColor.style.border = '4px solid green';
+    addressValidate.textContent = 'Adresse valide';
+    return true;
+  } else {
+    addressChangeColor.style.border = '4px solid red';
+    addressValidate.textContent = "Merci d'inscrire une adresse valide";
+    return false;
+  }
+};
+
+//------------ Validation ville ------------//
+form.city.addEventListener('change', function (e) {
+  e.preventDefault(e);
+  valideCity(this);
+});
+
+const valideCity = function (inputCity) {
+  let testCity = cityRegExp.test(inputCity.value);
+
+  let cityValidate = document.getElementById('cityErrorMsg');
+  let cityChangeColor = document.getElementById('city');
+  if (testCity) {
+    cityChangeColor.style.border = '4px solid green';
+    cityValidate.textContent = 'Ville valide';
+    return true;
+  } else {
+    cityChangeColor.style.border = '4px solid red';
+    cityValidate.textContent = "Merci d'inscrire une ville valide";
+    return false;
+  }
+};
+
+//------------ Validation E-mail ------------//
+form.email.addEventListener('change', function (e) {
+  e.preventDefault();
+  valideEmail(this);
+});
+
+const valideEmail = function (inputEmail) {
+  let testEmail = emailRegExp.test(inputEmail.value);
+
+  let emailValidate = document.getElementById('emailErrorMsg');
+  let emailChangeColor = document.getElementById('email');
+  if (testEmail) {
+    emailChangeColor.style.border = '4px solid green';
+    emailValidate.textContent = 'Email valide';
+    return true;
+  } else {
+    emailChangeColor.style.border = '4px solid red';
+    emailValidate.textContent = 'Veuillez renseigner une adresse Email valide';
+    return false;
+  }
+};
+
+/*------- Envoi de la commande et informations client --------*/
+
+form.addEventListener('submit', function (e) {
+  e.preventDefault();
+  // if (
+  //   valideFirstname(form.valideFirstname) &&
+  //   valideLastName(form.valideLastName) &&
+  //   valideAddress(form.valideAddress) &&
+  //   valideCity(form.valideCity) &&
+  //   valideEmail(form.valideEmail) === true
+  // ) {
+  order.style.background = 'green';
+  form.textContent = 'Merci pour votre commande !';
+  // localStorage.setItem('formulaireValues', JSON.stringify(formulaireValues));
+  // form.submit();
+  // } else {
+  // }
+});
+
+// Création d'une classe avec un constructor pour définir les objet dans lesquel iront les values du formulaire
+class Formulaire {
+  constructor() {
+    this.firstName = document.getElementById('firstName').value;
+    this.lastName = document.getElementById('lastName').value;
+    this.address = document.getElementById('address').value;
+    this.city = document.getElementById('city').value;
+    this.email = document.getElementById('email').value;
+  }
 }
 
-// ------------------Étape 10 : Passer la commande -----------------
+const formulaireValues = new Formulaire();
+
+const prenom = formulaireValues.firstName;
+const nom = formulaireValues.lastName;
+const adress = formulaireValues.address;
+const ville = formulaireValues.city;
+/*------ Mettre le contenu du LS dans les champs du formulaire ------*/
+// Récupération dans localStorage du formulaire saisie
+const dataLocalStorage = localStorage.getItem('formulaireValues');
+//Parse du localStorage pour exploitation de l'objet
+const dataLsParse = JSON.parse(dataLocalStorage);
+
+// Fonction pour réinjecter automatiquement les valeurs enregistrés dans LS
+// function remplirChamp(input) {
+//   document.querySelector(`#${input}`).value = dataLsParse[input];
+// }
+// On joue la fonction avec en paramétre les valeurs des querySelector concernés
+// remplirChamp('firstName');
+// remplirChamp('lastName');
+// remplirChamp('address');
+// remplirChamp('city');
+// remplirChamp('email');
