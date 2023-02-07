@@ -66,9 +66,6 @@ fetch('http://localhost:3000/api/products/' + idResult)
 // Récupérer le button sur le DOM via la const addToCart
 const addToCart = document.querySelector('#addToCart');
 
-//Initialiser un tableau vide qui va acceuillir item
-let data = [];
-
 // Récupératoin de l'input dans la variable pour ajout panier en cas de modification
 let inputQuantity = document.querySelector('input[id="quantity"]');
 
@@ -80,8 +77,9 @@ addToCart.addEventListener('click', (e) => {
   const quantity = document.querySelector('#quantity').value;
   const name = document.querySelector('#title').textContent;
 
+  //Initialiser un tableau vide qui va acceuillir item
+  let data = [];
   // On crée un objet qui servira de structure à data
-
   const item = {
     name: name,
     id: idResult,
@@ -97,26 +95,48 @@ addToCart.addEventListener('click', (e) => {
       item.quantity > 100 ||
       item.quantity === undefined
     ) {
-      alert('Veuillez renseigner une couleur et une quantitée ');
+      alert(
+        'Veuillez renseigner une couleur et une quantitée compris entre 1-100'
+      );
       return;
     } else {
-      /* On pousse l'objet item dans le tableau data , on crée un identifiant unique pour la clés 
-      ( id + color ).On sérialise*/
       data.push(item);
-      localStorage.setItem(item.id + '|' + item.color, JSON.stringify(item));
-      addToCart.innerHTML = 'Produit ajouté';
+      if (localStorage.getItem(item.id + '|' + item.color)) {
+        let localFound = localStorage.getItem(item.id + '|' + item.color);
+        let moveQuantity = JSON.parse(localFound);
+        item.quantity = moveQuantity.quantity + item.quantity;
+        // envoi des nouvelles valeurs dans localStorage
+        if (item.quantity <= 100) {
+          localStorage.setItem(
+            item.id + '|' + item.color,
+            JSON.stringify(item)
+          );
+        }
+      } else {
+        localStorage.setItem(item.id + '|' + item.color, JSON.stringify(item));
+        function addEffect() {
+          addToCart.innerHTML = ' Produit ajouté !';
+          addToCart.style.background = 'green';
+        }
+        function removeEffect() {
+          addToCart.innerHTML = ' Ajoute au panier';
+          addToCart.style.background = '';
+        }
+        setTimeout(removeEffect, 4000);
+        setTimeout(addEffect, 10);
+      }
     }
   }
 
   // On joue la fonction
   updateData(item, data);
-  modifQuantity(item);
-  /*-----  Redirection vers la page panier (optionnel)-----
-      =>   window.location.href = 'cart.html'; */
+
+  /*-----  Redirection vers la page panier (optionnel)-----*/
+  // window.location.href = 'cart.html';
 });
 
-function modifQuantity(item) {
-  inputQuantity.addEventListener('input', () => {
-    item.quantity = item.quantity + inputQuantity.value;
-  });
-}
+// function modifQuantity(item) {
+//   inputQuantity.addEventListener('input', () => {
+//     item.quantity = item.quantity + inputQuantity.value;
+//   });
+// }

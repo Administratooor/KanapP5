@@ -2,6 +2,7 @@
 /* -------------Étape 8 : Afficher un tableau récapitulatif des achats dans la page Panier---------*/
 
 const url = 'http://localhost:3000/api/products';
+// const page = document.location.href;
 
 /*----------------------------------------------------------------------------
             Parcourir le localStorage et injection des éléments
@@ -32,11 +33,10 @@ function returnProductDom() {
             totalProduit();
           }
         }
-
+        changeQuantity();
         deleteProduct();
       });
   }
-  changeQuantity();
 }
 
 /*----------------------------------------------------------------------------
@@ -46,7 +46,7 @@ function returnProductDom() {
 function insert(localParse, article) {
   return `<article class="cart__item" data-id="${localParse.id}" data-color="${localParse.color}">
   <div class="cart__item__img">
-    <img src="" alt="Photographie d'un canapé">
+    <img src="${article.imageUrl}" alt="${article.description}">
   </div>
   <div class="cart__item__content">
     <div class="cart__item__content__description">
@@ -93,14 +93,18 @@ function changeQuantity() {
         // utilisation de la condition
         if (panier == KanapArea.dataset.id + '|' + KanapArea.dataset.color) {
           //  retourne la valeur d'un nombre arrondi à l'entier le plus proche dans la variable priceMatch
+
           let priceMath = Math.round(e.target.value);
-          // assigner la quantité de priceMatch dans localStorage
-          localParse.quantity = priceMath;
-          // envoi des nouvelle valeur dans localStorage
-          localStorage.setItem(panier, JSON.stringify(localParse));
-          console.log(localParse);
-          totalProduit();
-        } // Re calcul du prix total
+          if (priceMath >= 1 && priceMath <= 100) {
+            // assigner la quantité de priceMatch dans localStorage
+            localParse.quantity = priceMath;
+            // envoi des nouvelles valeurs dans localStorage
+            localStorage.setItem(panier, JSON.stringify(localParse));
+            totalProduit();
+          } else {
+            alert('Attention les quantités sont comprises entre 1 et 100');
+          }
+        }
       }
     });
   });
@@ -115,35 +119,42 @@ function totalProduit() {
   // Declaration en nombre de totalPrice
   let totalPrice = 0;
 
-  // boucle sur localStorage pour recupération de la quantity
-  for (let i = 0; i < localStorage.length; i++) {
-    let localFound = localStorage.getItem(localStorage.key(i));
-    let localParse = JSON.parse(localFound);
-    // Injection de la quantity du local storage
-    totalProduct += localParse.quantity;
-    // Injection de la quantity dans le DOM
-    document.getElementById('totalQuantity').textContent = totalProduct;
+  /* boucle sur localStorage pour recupération de la quantity si le localStorage est > à 0*/
+  //----------------- appel des quantités sur localStorage -----------//
+  if (localStorage.length > 0) {
+    for (let i = 0; i < localStorage.length; i++) {
+      let localFoundKey = localStorage.getItem(localStorage.key(i));
+      // Parse de localFoundKey
+      let localParseProduct = JSON.parse(localFoundKey);
+      // Injection de la quantity du local storage
+      totalProduct += localParseProduct.quantity;
+      // Injection de la quantity dans le DOM
+      document.getElementById('totalQuantity').textContent = totalProduct;
 
-    /* appel API si l'id est identique a l'id du localStorage 
-    > Importer le prix et le multiplier par la quantity et l'afficher dans DOM */
-    fetch(url)
-      // Extraction des données en json
-      .then((data) => data.json())
-
-      .then((dataFound) => {
-        // console.log(dataFound);
-        for (let foundProduct of dataFound) {
-          // Importation du prix dans la variable price
-          let price = foundProduct.price;
-          if (foundProduct._id === localParse.id) {
-            totalPrice += localParse.quantity * price;
-            document.getElementById('totalPrice').textContent = totalPrice;
+      //----------------- appel des prix sur API -----------//
+      fetch(url)
+        // Extraction des données en json
+        .then((data) => data.json())
+        // exploitation des donnés via une boucle for of
+        .then((dataFound) => {
+          for (let foundProduct of dataFound) {
+            // Importation du prix dans la variable price pour plus de sécurité (importation du prix via l'API)
+            let price = foundProduct.price;
+            // si l'Id est identique à celui du localStorage ,on multiplie la quantité par le prix.
+            if (foundProduct._id === localParseProduct.id) {
+              totalPrice += localParseProduct.quantity * price;
+              document.getElementById('totalPrice').textContent = totalPrice;
+            }
           }
-        }
-      })
-      .catch(function () {
-        console.log('test');
-      });
+        })
+        .catch(function () {
+          console.log('test');
+        });
+    }
+  } else {
+    // On remet les éléments à 0
+    document.getElementById('totalPrice').textContent = 0;
+    document.getElementById('totalQuantity').textContent = 0;
   }
 }
 
@@ -164,12 +175,12 @@ function deleteProduct() {
           localStorage.removeItem(item.id + '|' + item.color);
           deleteItem.remove();
           totalProduit();
-          window.location.reload();
         }
       }
     });
   });
 }
+
 // ------------------Étape 10 : Passer la commande ----------------- //
 
 //---------- REGEX Contrôle Formulaire--------------//
@@ -177,7 +188,7 @@ function deleteProduct() {
 // Déclaration des Regex pour utilisation dans les contrôles de form
 let firstNameLastNameRegExp = /^[a-záàâäãåçéèêëíìîïñóòôöõúùûüýÿæœ\s-]{1,31}$/i;
 let addressRegExp = /^[a-z0-9áàâäãåçéèêëíìîïñóòôöõúùûüýÿæœ\s-]{1,60}$/i;
-let cityRegExp = /^[a-záàâäãåçéèêëíìîïñóòôöõúùûüýÿæœ\s-]{1,31}$/i;
+let cityRegExp = /^[a-záàâäãåçéèêëíìîïñóòôöõúùûüýÿæœ\s-]{1,50}$/i;
 let emailRegExp = /^[A-Za-z0-9_!#$%&'*+\/=?`{|}~^.-]+@[A-Za-z0-9.-]+$/i;
 
 // Déclaration des variables pour utilisation dans les contrôles de form
@@ -187,20 +198,26 @@ let submit = document.querySelector('.cart__order__form__submit');
 
 //------------ Validation du prénom  ------------//
 form.firstName.addEventListener('change', function (e) {
+  // on prévient le comportement par défault
   e.preventDefault();
+  //on joue la function valideFirstName
   valideFirstname(this);
 });
+
 const valideFirstname = function (inputFirstName) {
+  // Test de la Regex avec la value de inputFirstName
   let testFirstname = firstNameLastNameRegExp.test(inputFirstName.value);
 
   let firstNameValidate = document.getElementById('firstNameErrorMsg');
   let firstNameChangeColor = document.getElementById('firstName');
 
   if (testFirstname) {
+    // on applique si vrai
     firstNameChangeColor.style.border = '4px solid green';
     firstNameValidate.textContent = 'Prénom valide';
     return true;
   } else {
+    // on applique si false
     firstNameChangeColor.style.border = '4px solid red';
     firstNameValidate.textContent = "Merci d'inscrire un prénom valide";
     return false;
@@ -235,6 +252,7 @@ form.address.addEventListener('change', function (e) {
   e.preventDefault();
   valideAddress(this);
 });
+
 const valideAddress = function (inputAddress) {
   let testAddress = addressRegExp.test(inputAddress.value);
 
@@ -298,53 +316,98 @@ const valideEmail = function (inputEmail) {
 
 /*------- Envoi de la commande et informations client --------*/
 
+const dataProduct = [];
+/*-----------------------------------------------------------------------
+ ************   Action à l'envoi du formulaire  ****************/
+
 form.addEventListener('submit', function (e) {
   e.preventDefault();
-  // if (
-  //   valideFirstname(form.valideFirstname) &&
-  //   valideLastName(form.valideLastName) &&
-  //   valideAddress(form.valideAddress) &&
-  //   valideCity(form.valideCity) &&
-  //   valideEmail(form.valideEmail) === true
-  // ) {
-  order.style.background = 'green';
-  form.textContent = 'Merci pour votre commande !';
-  // localStorage.setItem('formulaireValues', JSON.stringify(formulaireValues));
-  // form.submit();
-  // } else {
-  // }
+  if (
+    valideFirstname(form.firstName) &&
+    valideLastName(form.lastName) &&
+    valideAddress(form.address) &&
+    valideCity(form.city) &&
+    valideEmail(form.email) &&
+    localStorage.length > 0
+  ) {
+    const dataCustomer = [];
+
+    function dataCustom() {
+      const item = {
+        firstName: document.getElementById('firstName').value,
+        lastName: document.getElementById('lastName').value,
+        address: document.getElementById('address').value,
+        city: document.getElementById('city').value,
+        email: document.getElementById('email').value,
+      };
+
+      dataCustomer.push(item);
+      localStorage.setItem('formulaireValues', JSON.stringify(dataCustomer));
+    }
+
+    dataCustom();
+    envoiPaquet();
+  } else {
+    alert('Erreur, merci de renseigner 1 produit au minimum');
+  }
 });
 
-// Création d'une classe avec un constructor pour définir les objet dans lesquel iront les values du formulaire
-class Formulaire {
-  constructor() {
-    this.firstName = document.getElementById('firstName').value;
-    this.lastName = document.getElementById('lastName').value;
-    this.address = document.getElementById('address').value;
-    this.city = document.getElementById('city').value;
-    this.email = document.getElementById('email').value;
+let product;
+let commandeProduct = [];
+
+function produitSend() {
+  // boucle sur les clefs
+  for (i = 0; i < localStorage.length; i++) {
+    let itemId = localStorage.getItem(localStorage.key(i));
+    let myProduct = JSON.parse(itemId);
+    // on conserve les product.id n'étant pas égal à undefined
+    if (myProduct.id === undefined) {
+      // on pousse les id récupérés dans commandeProduct pour utilisation dans paquet()
+    } else {
+      commandeProduct.push(myProduct.id);
+    }
   }
 }
 
-const formulaireValues = new Formulaire();
+let getContact;
+let paquetPost;
+// preparation de la commande -> contact + produits
+function paquet() {
+  getContact = localStorage.getItem('formulaireValues');
+  let localParseContact = JSON.parse(getContact);
+  paquetPost = {
+    contact: {
+      firstName: localParseContact[0].firstName,
+      lastName: localParseContact[0].lastName,
+      address: localParseContact[0].address,
+      city: localParseContact[0].city,
+      email: localParseContact[0].email,
+    },
+    products: commandeProduct,
+  };
+}
 
-const prenom = formulaireValues.firstName;
-const nom = formulaireValues.lastName;
-const adress = formulaireValues.address;
-const ville = formulaireValues.city;
-/*------ Mettre le contenu du LS dans les champs du formulaire ------*/
-// Récupération dans localStorage du formulaire saisie
-const dataLocalStorage = localStorage.getItem('formulaireValues');
-//Parse du localStorage pour exploitation de l'objet
-const dataLsParse = JSON.parse(dataLocalStorage);
+function envoiPaquet() {
+  produitSend();
+  paquet();
+  // remise des information à l'API pour récéption order.Id
+  fetch('http://localhost:3000/api/products/order', {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    // selection paquetPost et transformation en chaine de caractères
+    body: JSON.stringify(paquetPost),
+  })
+    // Quand l'objet reviens , convertir en json
+    .then((res) => res.json())
 
-// Fonction pour réinjecter automatiquement les valeurs enregistrés dans LS
-// function remplirChamp(input) {
-//   document.querySelector(`#${input}`).value = dataLsParse[input];
-// }
-// On joue la fonction avec en paramétre les valeurs des querySelector concernés
-// remplirChamp('firstName');
-// remplirChamp('lastName');
-// remplirChamp('address');
-// remplirChamp('city');
-// remplirChamp('email');
+    .then((data) => {
+      // redirection vers la page de confirmation avec l'insertion de data.orderId dans url
+      window.location.href = `/front/html/confirmation.html?commande=${data.orderId}`;
+    })
+    .catch(function (err) {
+      alert('erreur');
+    });
+}
