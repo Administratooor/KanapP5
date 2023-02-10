@@ -14,25 +14,25 @@ function returnProductDom() {
   for (let i = 0; i < localStorage.length; i++) {
     let localFound = localStorage.getItem(localStorage.key(i));
     let localParse = JSON.parse(localFound);
-
+    // promess ver API pour récupérer le prix de maniére sécurisé
     fetch(url)
       // Extraction des données en json
       .then((data) => data.json())
-
+      // retour de l'objet en JSON
       .then((dataFound) => {
-        // console.log(dataFound);
-        for (let foundProduct of dataFound) {
-          let article = foundProduct;
+        // boucle for of pour récupérer kes id
+        for (let article of dataFound) {
+          // si les id correspondent ont injecte les informations dans le DOM avec la fontion insert()
           if (article._id === localParse.id) {
-            // let picture = document.querySelector('.cart__item__img');
-            // console.log(picture);
             document.querySelector('#cart__items').innerHTML += insert(
               localParse,
               article
             );
+            // on calcul le total des articles
             totalProduit();
           }
         }
+        // ont donne la possibilitée de jouer les fonctions de suppréssion et de modification de la quantité
         changeQuantity();
         deleteProduct();
       });
@@ -42,7 +42,8 @@ function returnProductDom() {
 /*----------------------------------------------------------------------------
                 Fonction pour innertHTML de #cart__items 
 ------------------------------------------------------------------------------*/
-
+/* --insertion localParse provennant du localStorage ( pour les informations non sensible)
+---- insertion de article via API pour sécurisé le prix*/
 function insert(localParse, article) {
   return `<article class="cart__item" data-id="${localParse.id}" data-color="${localParse.color}">
   <div class="cart__item__img">
@@ -66,6 +67,7 @@ function insert(localParse, article) {
   </div>
 </article>`;
 }
+// On joue la fonction
 returnProductDom();
 
 /*-------------------------------------------------------------------------------------------------*/
@@ -80,7 +82,7 @@ function changeQuantity() {
   const KanapArea = document.querySelectorAll('.cart__item');
   //  utilisation de la méthode nodeList pour appelle callback sur chaque éléments de cart__item
   KanapArea.forEach((KanapArea) => {
-    // Appel de l'événement au change sur kanapArea et récupération de la valeur
+    // écoute de l'événement au change sur kanapArea et récupération de la valeur
     KanapArea.addEventListener('change', (e) => {
       //boucle sur les key du localStorage
       for (let i = 0; i < localStorage.length; i++) {
@@ -88,19 +90,21 @@ function changeQuantity() {
         let localFound = localStorage.getItem(localStorage.key(i));
         // Parse des key dans localParse
         let localParse = JSON.parse(localFound);
-        // utilisation des valeurs pour création de la condition qui pointe le produit ayant le méme id et color que dataset
+        /* déclaration des key du localStorage dans une variable*/
         let panier = localParse.id + '|' + localParse.color;
         // utilisation de la condition
         if (panier == KanapArea.dataset.id + '|' + KanapArea.dataset.color) {
           //  retourne la valeur d'un nombre arrondi à l'entier le plus proche dans la variable priceMatch
-
           let priceMath = Math.round(e.target.value);
+          // on s'assure que la quantité du produit est bien entre 1 et 100 unité
           if (priceMath >= 1 && priceMath <= 100) {
             // assigner la quantité de priceMatch dans localStorage
             localParse.quantity = priceMath;
             // envoi des nouvelles valeurs dans localStorage
             localStorage.setItem(panier, JSON.stringify(localParse));
+            // on recalcul le total
             totalProduit();
+            // attention ! une alert est déclenché si la quantité saisie n'est pas bonne
           } else {
             alert('Attention les quantités sont comprises entre 1 et 100');
           }
@@ -118,7 +122,6 @@ function totalProduit() {
   let totalProduct = 0;
   // Declaration en nombre de totalPrice
   let totalPrice = 0;
-
   /* boucle sur localStorage pour recupération de la quantity si le localStorage est > à 0*/
   //----------------- appel des quantités sur localStorage -----------//
   if (localStorage.length > 0) {
@@ -159,15 +162,23 @@ function totalProduit() {
 }
 
 function deleteProduct() {
+  // déclaration d'une variable pour écouter les supréssion
   const deleteButtons = document.querySelectorAll('.deleteItem');
   deleteButtons.forEach((deleteButton) => {
     deleteButton.addEventListener('click', () => {
+      /* element.closest nous permet de cibler un éléments supérieur du noeud 
+      jusqu'à la racine avec le nom indiqué en paramétre */
       const deleteItem = deleteButton.closest('.cart__item');
+      // on récupére les dataset pour cibler le bonne élément
       const localFound = localStorage.getItem(
         deleteItem.dataset.id + '|' + deleteItem.dataset.color
       );
+      // si localFound est vrai ont le parse
       if (localFound) {
         const item = JSON.parse(localFound);
+        /* si les dataset(id et color) et item(id et color) 
+        sont identiques ont suprimme l'élément du localStorage 
+        et on supprime la cart concérné du DOM et on re-calcul le total*/
         if (
           deleteItem.dataset.id === item.id &&
           deleteItem.dataset.color === item.color
@@ -314,14 +325,13 @@ const valideEmail = function (inputEmail) {
   }
 };
 
-/*------- Envoi de la commande et informations client --------*/
+// -------- Étape 11 : Afficher le numéro de commande --------*/
 
-const dataProduct = [];
-/*-----------------------------------------------------------------------
- ************   Action à l'envoi du formulaire  ****************/
-
+// ecoute de l'événement de soumission du formulaire
 form.addEventListener('submit', function (e) {
+  //on prévient le comportement par défaut du boutton pour le contrôler
   e.preventDefault();
+  // si tout les champ du formulaire on pu être vérifier et que le localStorage et supérieur à 1 élément
   if (
     valideFirstname(form.firstName) &&
     valideLastName(form.lastName) &&
@@ -330,65 +340,43 @@ form.addEventListener('submit', function (e) {
     valideEmail(form.email) &&
     localStorage.length > 0
   ) {
-    const dataCustomer = [];
-
-    function dataCustom() {
-      const item = {
-        firstName: document.getElementById('firstName').value,
-        lastName: document.getElementById('lastName').value,
-        address: document.getElementById('address').value,
-        city: document.getElementById('city').value,
-        email: document.getElementById('email').value,
-      };
-
-      dataCustomer.push(item);
-      localStorage.setItem('formulaireValues', JSON.stringify(dataCustomer));
-    }
-
-    dataCustom();
+    // on envoi la commande
     envoiPaquet();
+    // si le panier n'est pas remplie d'au moins 1 produit
   } else {
     alert('Erreur, merci de renseigner 1 produit au minimum');
   }
 });
 
-let product;
+// déclaration d'un tableau qui acceuillera les id des produits
 let commandeProduct = [];
 
 function produitSend() {
-  // boucle sur les clefs
+  // boucle sur les clefs pour obtenir les id
   for (i = 0; i < localStorage.length; i++) {
     let itemId = localStorage.getItem(localStorage.key(i));
     let myProduct = JSON.parse(itemId);
-    // on conserve les product.id n'étant pas égal à undefined
-    if (myProduct.id === undefined) {
-      // on pousse les id récupérés dans commandeProduct pour utilisation dans paquet()
-    } else {
-      commandeProduct.push(myProduct.id);
-    }
+    // on récupère en passant les id de chaque produit pour les injecter dans le tableau
+    commandeProduct.push(myProduct.id);
   }
 }
 
-let getContact;
-let paquetPost;
 // preparation de la commande -> contact + produits
 function paquet() {
-  getContact = localStorage.getItem('formulaireValues');
-  let localParseContact = JSON.parse(getContact);
   paquetPost = {
     contact: {
-      firstName: localParseContact[0].firstName,
-      lastName: localParseContact[0].lastName,
-      address: localParseContact[0].address,
-      city: localParseContact[0].city,
-      email: localParseContact[0].email,
+      firstName: document.getElementById('firstName').value,
+      lastName: document.getElementById('lastName').value,
+      address: document.getElementById('address').value,
+      city: document.getElementById('city').value,
+      email: document.getElementById('email').value,
     },
     products: commandeProduct,
   };
 }
 
 function envoiPaquet() {
-  produitSend();
+  // on déclenche la fontion
   paquet();
   // remise des information à l'API pour récéption order.Id
   fetch('http://localhost:3000/api/products/order', {
@@ -407,6 +395,7 @@ function envoiPaquet() {
       // redirection vers la page de confirmation avec l'insertion de data.orderId dans url
       window.location.href = `/front/html/confirmation.html?commande=${data.orderId}`;
     })
+    // en cas d'erreur
     .catch(function (err) {
       alert('erreur');
     });

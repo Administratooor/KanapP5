@@ -11,13 +11,12 @@ class Article {
   }
 }
 
-//1.Récupératon de la chaîne de requête dans l'url*/
+// récupératon de la chaîne de requête dans l'url
 const queryString_url_id = window.location.search;
-console.log(queryString_url_id);
 
 /*---Étape 5 : Récupérer l’id du produit à afficher---*/
 
-// Extraire l'id avec urlSearchParams
+// extraire l'id avec urlSearchParams
 const idProduct = new URLSearchParams(queryString_url_id);
 console.log(idProduct);
 
@@ -86,7 +85,7 @@ addToCart.addEventListener('click', (e) => {
     color: color,
     quantity: Math.round(Number(quantity)), // Convertir la quantité en number
   };
-
+  // on test si les conditions sont vraie on alert le visiteurs, autrement on créer notre tableau
   function updateData(item, data) {
     if (
       item.color === '' ||
@@ -101,11 +100,12 @@ addToCart.addEventListener('click', (e) => {
       return;
     } else {
       data.push(item);
+      //
       if (localStorage.getItem(item.id + '|' + item.color)) {
         let localFound = localStorage.getItem(item.id + '|' + item.color);
         let moveQuantity = JSON.parse(localFound);
         item.quantity = moveQuantity.quantity + item.quantity;
-        // envoi des nouvelles valeurs dans localStorage
+        // envoi des nouvelles valeurs dans localStorage si la quantité et égale ou inférieur à 100
         if (item.quantity <= 100) {
           localStorage.setItem(
             item.id + '|' + item.color,
@@ -113,6 +113,8 @@ addToCart.addEventListener('click', (e) => {
           );
         }
       } else {
+        // envoi des nouvelles valeurs dans le localStorage
+        // avec ouverture de validation visiteur géré par setTimeout
         localStorage.setItem(item.id + '|' + item.color, JSON.stringify(item));
         function addEffect() {
           addToCart.innerHTML = ' Produit ajouté !';
@@ -122,7 +124,7 @@ addToCart.addEventListener('click', (e) => {
           addToCart.innerHTML = ' Ajoute au panier';
           addToCart.style.background = '';
         }
-        setTimeout(removeEffect, 4000);
+        setTimeout(removeEffect, 3000);
         setTimeout(addEffect, 10);
       }
     }
@@ -134,9 +136,3 @@ addToCart.addEventListener('click', (e) => {
   /*-----  Redirection vers la page panier (optionnel)-----*/
   // window.location.href = 'cart.html';
 });
-
-// function modifQuantity(item) {
-//   inputQuantity.addEventListener('input', () => {
-//     item.quantity = item.quantity + inputQuantity.value;
-//   });
-// }
