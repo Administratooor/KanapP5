@@ -1,32 +1,23 @@
-/*---Étape 4 : Faire le lien entre un produit de la page
-d’accueil et la page Produit---*/
-
-/* New Article (script.js) récupére sur let = article l'itération de jsonArticle (tableau)
-en lui affectant les propriétés (object.assign(target , source)) si les 2 conditions
-sont vraies avec this. */
-
-class Article {
-  constructor(jsonArticle) {
-    jsonArticle && Object.assign(this, jsonArticle);
-  }
-}
+/*--- Étape 4 : Faire le lien entre un produit de la page d’accueil et la page Produit ---*/
 
 // récupératon de la chaîne de requête dans l'url
 const queryString_url_id = window.location.search;
+console.log(queryString_url_id);
 
-/*---Étape 5 : Récupérer l’id du produit à afficher---*/
+/*--- Étape 5 : Récupérer l’id du produit à afficher ---*/
 
-// extraire l'id avec urlSearchParams
+/* L’interface URLSearchParams défini des méthodes utilitaires pour 
+travailler avec la chaîne de requête (les paramètres GET) d’une URL.*/
 const idProduct = new URLSearchParams(queryString_url_id);
 console.log(idProduct);
 
-// Récupération de l'id
+// Retourne la première valeur associée au paramètre de recherche donné à la méthode .get
 const idResult = idProduct.get('id');
 console.log(idResult);
 
-/*---Étape 6 : Insérer un produit et ses détails dans la page
-Produit---*/
-// 1. Block de code pour insertion Html + variables correspondantes
+/*---Étape 6 : Insérer un produit et ses détails dans la page produit---*/
+
+// insertion éléments DOM
 function addProduct(product) {
   document.querySelector(
     '.item__img'
@@ -34,7 +25,8 @@ function addProduct(product) {
   document.querySelector('#title').innerHTML += `${product.name}`;
   document.querySelector('#price').innerHTML += `${product.price}`;
   document.querySelector('#description').innerHTML += `${product.description}`;
-  // boucle sur les couleurs de l'api pour insérer dans l'id colors les values associés au produit
+  /* boucle sur product.colors pour y extraire les valeurs 
+  des couleurs disponibles dans l'API l'une après l'autre */
   for (let couleur of product.colors) {
     document.querySelector(
       '#colors'
@@ -52,7 +44,7 @@ fetch('http://localhost:3000/api/products/' + idResult)
     // Fonction pour afficher le produit sur le DOM
     addProduct(product);
   })
-  // 2.Message d'erreur > contact service commercial
+  // Message d'erreur > contact service commercial
   .catch(function () {
     document.querySelector(
       '.item__img'
@@ -65,27 +57,33 @@ fetch('http://localhost:3000/api/products/' + idResult)
 // Récupérer le button sur le DOM via la const addToCart
 const addToCart = document.querySelector('#addToCart');
 
-// Récupératoin de l'input dans la variable pour ajout panier en cas de modification
+// Récupération de l'input dans la variable pour ajout panier en cas de modification
 let inputQuantity = document.querySelector('input[id="quantity"]');
 
-//Evénement au click sur le button
+function removeEffect() {
+  addToCart.innerHTML = ' Ajout au panier';
+  addToCart.style.background = '';
+}
+
+// écoute sur la cart produit
 addToCart.addEventListener('click', (e) => {
+  // on previent le comportement par défaut
   e.preventDefault();
-  // Récupération sur le DOM des éléments "color,quantity,name"
+  // récupération sur le DOM des éléments "color,quantity,name"
   const color = document.querySelector('#colors').value;
   const quantity = document.querySelector('#quantity').value;
   const name = document.querySelector('#title').textContent;
 
-  //Initialiser un tableau vide qui va acceuillir item
+  // initialiser un tableau vide qui va accueillir item
   let data = [];
-  // On crée un objet qui servira de structure à data
+  // On crée un objet
   const item = {
     name: name,
     id: idResult,
     color: color,
     quantity: Math.round(Number(quantity)), // Convertir la quantité en number
   };
-  // on test si les conditions sont vraie on alert le visiteurs, autrement on créer notre tableau
+  // on test si les conditions sont vraies on alerte le visiteur, autrement on crée notre tableau
   function updateData(item, data) {
     if (
       item.color === '' ||
@@ -95,38 +93,35 @@ addToCart.addEventListener('click', (e) => {
       item.quantity === undefined
     ) {
       alert(
-        'Veuillez renseigner une couleur et une quantitée compris entre 1-100'
+        'Veuillez renseigner une couleur et une quantité comprises entre 1-100'
       );
       return;
     } else {
       data.push(item);
-      //
-      if (localStorage.getItem(item.id + '|' + item.color)) {
-        let localFound = localStorage.getItem(item.id + '|' + item.color);
-        let moveQuantity = JSON.parse(localFound);
-        item.quantity = moveQuantity.quantity + item.quantity;
-        // envoi des nouvelles valeurs dans localStorage si la quantité et égale ou inférieur à 100
-        if (item.quantity <= 100) {
-          localStorage.setItem(
-            item.id + '|' + item.color,
-            JSON.stringify(item)
-          );
-        }
-      } else {
-        // envoi des nouvelles valeurs dans le localStorage
-        // avec ouverture de validation visiteur géré par setTimeout
+    }
+    // Gérer l'ajout de produit ou l'ajout de la quantité à un produit existant avec une condition
+    if (localStorage.getItem(item.id + '|' + item.color)) {
+      // on récupère les clefs valeurs du produit si il existe
+      let localFound = localStorage.getItem(item.id + '|' + item.color);
+      // on parse pour exploiter
+      let moveQuantity = JSON.parse(localFound);
+      // on indique à la quantité du localStorage qu'elle ajoutera la valeur du champ associé à elle même 
+      item.quantity = moveQuantity.quantity + item.quantity;
+      // envoi des nouvelles valeurs dans localStorage si la quantité est égale ou inférieure à 100
+      if (item.quantity <= 100) {
         localStorage.setItem(item.id + '|' + item.color, JSON.stringify(item));
+        // Gestion visuel de la validation d'ajout produit
         function addEffect() {
-          addToCart.innerHTML = ' Produit ajouté !';
+          // indique au visiteur le nombre de produit dans leur panier
+          addToCart.innerHTML = `Produit ajouté | Total de ${item.name} : ${item.quantity}`;
           addToCart.style.background = 'green';
         }
-        function removeEffect() {
-          addToCart.innerHTML = ' Ajoute au panier';
-          addToCart.style.background = '';
-        }
+        setTimeout(addEffect, 3);
         setTimeout(removeEffect, 3000);
-        setTimeout(addEffect, 10);
       }
+    } else {
+      // envoi des nouvelles valeurs dans le localStorage
+      localStorage.setItem(item.id + '|' + item.color, JSON.stringify(item));
     }
   }
 

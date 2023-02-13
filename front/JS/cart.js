@@ -2,39 +2,43 @@
 /* -------------Étape 8 : Afficher un tableau récapitulatif des achats dans la page Panier---------*/
 
 const url = 'http://localhost:3000/api/products';
-// const page = document.location.href;
 
-/*----------------------------------------------------------------------------
-            Parcourir le localStorage et injection des éléments
-                  dans #cart__items via function insert 
-------------------------------------------------------------------------------*/
+/*------Parcourir le localStorage et injection des éléments dans #cart__items via function insert */
 
 function returnProductDom() {
-  // Récuperer et parsé le localStorage et toutes les key
+  // Récuperer et parser le localStorage et toutes les key
   for (let i = 0; i < localStorage.length; i++) {
     let localFound = localStorage.getItem(localStorage.key(i));
     let localParse = JSON.parse(localFound);
-    // promess ver API pour récupérer le prix de maniére sécurisé
+    // promess ver API pour récupérer le prix de façon sécurisée
     fetch(url)
-      // Extraction des données en json
+      // Extraction de la réponse en json
       .then((data) => data.json())
       // retour de l'objet en JSON
       .then((dataFound) => {
-        // boucle for of pour récupérer kes id
+        // boucle pour récupérer les id
         for (let article of dataFound) {
-          // si les id correspondent ont injecte les informations dans le DOM avec la fontion insert()
+          // si les id correspondent on injecte les informations dans le DOM avec la fontion insert()
           if (article._id === localParse.id) {
             document.querySelector('#cart__items').innerHTML += insert(
               localParse,
               article
             );
-            // on calcul le total des articles
+            // on calcule le total des articles
             totalProduit();
           }
         }
-        // ont donne la possibilitée de jouer les fonctions de suppréssion et de modification de la quantité
+
+        // on donne la possibilité de jouer les fonctions de suppression et de modification de la quantité
         changeQuantity();
         deleteProduct();
+      })
+      .catch(function() {
+        document.querySelector(
+          'h1'
+        ).textContent = `Oops ! Une erreur est survenue, nous tentons de résoudre le problème au plus vite.`;
+        document.querySelector('h1').style.background = 'rgb(43, 99, 95)';
+        document.querySelector('h1').style.fontSize = '16px';
       });
   }
 }
@@ -42,8 +46,9 @@ function returnProductDom() {
 /*----------------------------------------------------------------------------
                 Fonction pour innertHTML de #cart__items 
 ------------------------------------------------------------------------------*/
-/* --insertion localParse provennant du localStorage ( pour les informations non sensible)
----- insertion de article via API pour sécurisé le prix*/
+
+/*--- insertion localParse issue du localStorage ( pour les informations non sensible)
+---- insertion de article via API pour sécuriser le prix ------*/
 function insert(localParse, article) {
   return `<article class="cart__item" data-id="${localParse.id}" data-color="${localParse.color}">
   <div class="cart__item__img">
@@ -78,11 +83,11 @@ returnProductDom();
 //--------------------------------------------------------------
 
 function changeQuantity() {
-  // selection de la liste de noeuds
+  // sélection de la liste de noeuds
   const KanapArea = document.querySelectorAll('.cart__item');
-  //  utilisation de la méthode nodeList pour appelle callback sur chaque éléments de cart__item
+  //  utilisation de la méthode nodeList pour appel callback sur chaque élément de cart__item
   KanapArea.forEach((KanapArea) => {
-    // écoute de l'événement au change sur kanapArea et récupération de la valeur
+    // écoute de l'événement sur kanapArea et récupération de la valeur
     KanapArea.addEventListener('change', (e) => {
       //boucle sur les key du localStorage
       for (let i = 0; i < localStorage.length; i++) {
@@ -90,21 +95,21 @@ function changeQuantity() {
         let localFound = localStorage.getItem(localStorage.key(i));
         // Parse des key dans localParse
         let localParse = JSON.parse(localFound);
-        /* déclaration des key du localStorage dans une variable*/
+        // déclaration des key du localStorage dans une variable
         let panier = localParse.id + '|' + localParse.color;
         // utilisation de la condition
         if (panier == KanapArea.dataset.id + '|' + KanapArea.dataset.color) {
           //  retourne la valeur d'un nombre arrondi à l'entier le plus proche dans la variable priceMatch
           let priceMath = Math.round(e.target.value);
-          // on s'assure que la quantité du produit est bien entre 1 et 100 unité
+          // on s'assure que la quantité du produit est bien entre 1 et 100 unités
           if (priceMath >= 1 && priceMath <= 100) {
             // assigner la quantité de priceMatch dans localStorage
             localParse.quantity = priceMath;
             // envoi des nouvelles valeurs dans localStorage
             localStorage.setItem(panier, JSON.stringify(localParse));
-            // on recalcul le total
+            // on recalcule le total
             totalProduit();
-            // attention ! une alert est déclenché si la quantité saisie n'est pas bonne
+            // attention ! une alerte est déclenchée si la quantité saisie n'est pas bonne
           } else {
             alert('Attention les quantités sont comprises entre 1 et 100');
           }
@@ -118,27 +123,26 @@ function changeQuantity() {
 // //             modification dynamique du prix
 // //--------------------------------------------------------------
 function totalProduit() {
-  // Declaration en nombre de totalProduct
+  // déclaration en nombre de totalProduct
   let totalProduct = 0;
-  // Declaration en nombre de totalPrice
+  // déclaration en nombre de totalPrice
   let totalPrice = 0;
-  /* boucle sur localStorage pour recupération de la quantity si le localStorage est > à 0*/
-  //----------------- appel des quantités sur localStorage -----------//
+  // boucle sur localStorage pour recupération de la quantity si le localStorage est > à 0 
   if (localStorage.length > 0) {
     for (let i = 0; i < localStorage.length; i++) {
       let localFoundKey = localStorage.getItem(localStorage.key(i));
-      // Parse de localFoundKey
+      // parse de localFoundKey
       let localParseProduct = JSON.parse(localFoundKey);
-      // Injection de la quantity du local storage
+      // injection de la quantity du local storage
       totalProduct += localParseProduct.quantity;
-      // Injection de la quantity dans le DOM
+      // injection de la quantity dans le DOM
       document.getElementById('totalQuantity').textContent = totalProduct;
 
       //----------------- appel des prix sur API -----------//
       fetch(url)
         // Extraction des données en json
         .then((data) => data.json())
-        // exploitation des donnés via une boucle for of
+        // exploitation des données via une boucle for of
         .then((dataFound) => {
           for (let foundProduct of dataFound) {
             // Importation du prix dans la variable price pour plus de sécurité (importation du prix via l'API)
@@ -151,7 +155,7 @@ function totalProduit() {
           }
         })
         .catch(function () {
-          console.log('test');
+          alert('error server');
         });
     }
   } else {
@@ -161,30 +165,34 @@ function totalProduit() {
   }
 }
 
+// //--------------------------------------------------------------
+// //             Supression dynamique du prix
+// //--------------------------------------------------------------
 function deleteProduct() {
-  // déclaration d'une variable pour écouter les supréssion
+  // déclaration d'une variable pour écouter les supressions
   const deleteButtons = document.querySelectorAll('.deleteItem');
   deleteButtons.forEach((deleteButton) => {
     deleteButton.addEventListener('click', () => {
-      /* element.closest nous permet de cibler un éléments supérieur du noeud 
+      /* element.closest nous permet de cibler un élément supérieur du noeud 
       jusqu'à la racine avec le nom indiqué en paramétre */
       const deleteItem = deleteButton.closest('.cart__item');
-      // on récupére les dataset pour cibler le bonne élément
+      // on récupére les dataset pour cibler le bon élément
       const localFound = localStorage.getItem(
         deleteItem.dataset.id + '|' + deleteItem.dataset.color
       );
-      // si localFound est vrai ont le parse
+      // si localFound est vrai on le parse
       if (localFound) {
         const item = JSON.parse(localFound);
         /* si les dataset(id et color) et item(id et color) 
-        sont identiques ont suprimme l'élément du localStorage 
-        et on supprime la cart concérné du DOM et on re-calcul le total*/
+        sont identiques ont suprime l'élément du localStorage 
+        et on supprime la cart concérné du DOM et on re-calcule le total*/
         if (
           deleteItem.dataset.id === item.id &&
           deleteItem.dataset.color === item.color
         ) {
           localStorage.removeItem(item.id + '|' + item.color);
           deleteItem.remove();
+          // on joue la fonction pour recalculer le prix 
           totalProduit();
         }
       }
@@ -209,14 +217,14 @@ let submit = document.querySelector('.cart__order__form__submit');
 
 //------------ Validation du prénom  ------------//
 form.firstName.addEventListener('change', function (e) {
-  // on prévient le comportement par défault
+  // on prévient le comportement par défaut
   e.preventDefault();
   //on joue la function valideFirstName
   valideFirstname(this);
 });
 
 const valideFirstname = function (inputFirstName) {
-  // Test de la Regex avec la value de inputFirstName
+  // Test de la Regex avec la value de form.firstName
   let testFirstname = firstNameLastNameRegExp.test(inputFirstName.value);
 
   let firstNameValidate = document.getElementById('firstNameErrorMsg');
@@ -327,11 +335,11 @@ const valideEmail = function (inputEmail) {
 
 // -------- Étape 11 : Afficher le numéro de commande --------*/
 
-// ecoute de l'événement de soumission du formulaire
+// écoute de l'événement de soumission du formulaire
 form.addEventListener('submit', function (e) {
   //on prévient le comportement par défaut du boutton pour le contrôler
   e.preventDefault();
-  // si tout les champ du formulaire on pu être vérifier et que le localStorage et supérieur à 1 élément
+  // si tout les champs du formulaire ont pu être vérifiés et que le localStorage et supérieur à 1 élément
   if (
     valideFirstname(form.firstName) &&
     valideLastName(form.lastName) &&
@@ -342,13 +350,13 @@ form.addEventListener('submit', function (e) {
   ) {
     // on envoi la commande
     envoiPaquet();
-    // si le panier n'est pas remplie d'au moins 1 produit
+    // si le panier n'est pas rempli d'au moins 1 produit
   } else {
     alert('Erreur, merci de renseigner 1 produit au minimum');
   }
 });
 
-// déclaration d'un tableau qui acceuillera les id des produits
+// déclaration d'un tableau qui accueillera les id des produits
 let commandeProduct = [];
 
 function produitSend() {
@@ -361,7 +369,7 @@ function produitSend() {
   }
 }
 
-// preparation de la commande -> contact + produits
+// préparation du paquet à envoyer 
 function paquet() {
   paquetPost = {
     contact: {
@@ -376,16 +384,18 @@ function paquet() {
 }
 
 function envoiPaquet() {
-  // on déclenche la fontion
+  // on déclenche la fonction
   paquet();
-  // remise des information à l'API pour récéption order.Id
+  // remise des informations à l'API pour récéption order.Id
   fetch('http://localhost:3000/api/products/order', {
+    // envoi 
     method: 'POST',
     headers: {
+      // on indique le format en récéption/expédition 
       Accept: 'application/json',
       'Content-Type': 'application/json',
     },
-    // selection paquetPost et transformation en chaine de caractères
+    // selection paquetPost et transformation en chaîne de caractères
     body: JSON.stringify(paquetPost),
   })
     // Quand l'objet reviens , convertir en json
@@ -397,6 +407,6 @@ function envoiPaquet() {
     })
     // en cas d'erreur
     .catch(function (err) {
-      alert('erreur');
+      alert('Le service est temporairement indisponible, veuillez nous en excuser');
     });
 }
